@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client API de Génération Vocale</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .audio-player {
+            margin-top: 20px;
+            width: 100%;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .checkbox-container {
+            margin: 10px 0;
+        }
+        .api-url {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Client API de Génération Vocale</h1>
+    
+    <div class="api-url">
+        URL de l'API: <span id="apiUrl">http://localhost:3001/api</span>
+        <button onclick="checkApiStatus()">Vérifier le statut</button>
+    </div>
+    
+    <div class="container">
+        <h2>Générer une voix à partir de texte</h2>
+        
+        <textarea id="textInput" placeholder="Entrez votre texte ici (maximum 5000 caractères)"></textarea>
+        
+        <div class="checkbox-container">
+            <input type="checkbox" id="useEnvironment" checked>
+            <label for="useEnvironment">Utiliser l'environnement sonore</label>
+        </div>
+        
+        <div class="checkbox-container">
+            <input type="checkbox" id="useAI" checked>
+            <label for="useAI">Utiliser l'IA pour l'analyse</label>
+        </div>
+        
+        <button id="generateButton" onclick="generateVoice()">Générer la voix</button>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div id="audioContainer" style="display: none;">
+            <h3>Audio généré:</h3>
+            <audio id="audioPlayer" controls class="audio-player"></audio>
+            <p>URL de l'audio: <a id="audioUrl" href="#" target="_blank"></a></p>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+        
+        // Vérifier le statut de l'API
+        async function checkApiStatus() {
+            try {
+                const statusElement = document.getElementById('status');
+                statusElement.style.display = 'block';
+                statusElement.className = 'status loading';
+                statusElement.textContent = 'Vérification du statut de l\'API...';
+                
+                const response = await fetch(`${API_URL}/status`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusElement.className = 'status success';
+                    statusElement.textContent = `API opérationnelle! ${data.message} (${data.timestamp})`;
+                } else {
+                    statusElement.className = 'status error';
+                    statusElement.textContent = `Erreur: ${data.message}`;
+                }
+            } catch (error) {
+                const statusElement = document.getElementById('status');
+                statusElement.style.display = 'block';
+                statusElement.className = 'status error';
+                statusElement.textContent = `Erreur de connexion à l'API: ${error.message}. Assurez-vous que le serveur est démarré sur le port 3001.`;
+            }
+        }
+        
+        // Générer la voix
+        async function generateVoice() {
+            const textInput = document.getElementById('textInput').value.trim();
+            const useEnvironment = document.getElementById('useEnvironment').checked;
+            const useAI = document.getElementById('useAI').checked;
+            const generateButton = document.getElementById('generateButton');
+            const statusElement = document.getElementById('status');
+            const audioContainer = document.getElementById('audioContainer');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const audioUrl = document.getElementById('audioUrl');
+            
+            // Vérifier si le texte est vide
+            if (!textInput) {
+                statusElement.style.display = 'block';
+                statusElement.className = 'status error';
+                statusElement.textContent = 'Veuillez entrer du texte avant de générer la voix.';
+                return;
+            }
+            
+            // Vérifier la longueur du texte
+            if (textInput.length > 5000) {
+                statusElement.style.display = 'block';
+                statusElement.className = 'status error';
+                statusElement.textContent = 'Le texte est trop long (maximum 5000 caractères).';
+                return;
+            }
+            
+            try {
+                // Désactiver le bouton pendant la génération
+                generateButton.disabled = true;
+                
+                // Afficher le statut de chargement
+                statusElement.style.display = 'block';
+                statusElement.className = 'status loading';
+                statusElement.textContent = 'Génération de la voix en cours...';
+                
+                // Masquer l'audio précédent
+                audioContainer.style.display = 'none';
+                
+                // Déterminer l'endpoint à utiliser
+                const endpoint = useEnvironment ? 'generate-voice-with-environment' : 'generate-voice';
+                
+                // Envoyer la requête à l'API
+                const response = await fetch(`${API_URL}/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: textInput,
+                        useAI: useAI
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Afficher le statut de succès
+                    statusElement.className = 'status success';
+                    statusElement.textContent = data.message;
+                    
+                    // Afficher l'audio
+                    audioContainer.style.display = 'block';
+                    audioPlayer.src = data.fullUrl;
+                    audioUrl.href = data.fullUrl;
+                    audioUrl.textContent = data.fullUrl;
+                    
+                    // Jouer l'audio automatiquement
+                    audioPlayer.play();
+                } else {
+                    // Afficher le statut d'erreur
+                    statusElement.className = 'status error';
+                    statusElement.textContent = `Erreur: ${data.message}`;
+                    if (data.error) {
+                        statusElement.textContent += ` (${data.error})`;
+                    }
+                }
+            } catch (error) {
+                // Afficher l'erreur
+                statusElement.className = 'status error';
+                statusElement.textContent = `Erreur de connexion à l'API: ${error.message}. Assurez-vous que le serveur est démarré sur le port 3001.`;
+            } finally {
+                // Réactiver le bouton
+                generateButton.disabled = false;
+            }
+        }
+        
+        // Vérifier le statut de l'API au chargement de la page
+        window.onload = function() {
+            checkApiStatus();
+        };
+    </script>
+</body>
+</html>
