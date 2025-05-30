@@ -40,9 +40,13 @@ const corsOptions = {
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
       
-      // Origines de production (à remplacer par vos domaines Vercel)
-      'https://votre-module-histoire.vercel.app',
-      'https://votre-module-vocal.vercel.app'
+      // Origines de production (domaines Vercel)
+      'https://modul-vocal.vercel.app',
+      'https://modul-histoire.vercel.app',
+      'https://module-vocal.vercel.app',
+      'https://module-histoire.vercel.app',
+      // Accepter tous les sous-domaines de vercel.app pour le développement
+      /\.vercel\.app$/
     ];
     
     // Vérifier si l'origine est autorisée
