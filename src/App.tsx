@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TextInput from './components/TextInput';
 import VoicePlayer from './components/VoicePlayer';
-import { generateVoice } from './services/elevenLabsAPI';
+import { generateVoiceWithEnvironment } from './services/elevenLabsAPI';
 import { logger } from './config/development';
 import './App.css';
 
@@ -62,14 +62,11 @@ const App: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      // Si le texte n'a pas de balises d'émotion, on ajoute l'émotion par défaut (sensuel)
-      const textWithEmotion = inputText.match(/\[\w+\]/) 
-        ? inputText 
-        : `[sensuel]${inputText}[/sensuel]`;
-      
-      logger.debug('Texte avec émotions:', textWithEmotion);
+      // Utiliser directement le texte sans ajouter de balises d'émotion
+      // L'analyse sera faite par l'API Grok
+      logger.debug('Texte à analyser:', inputText);
 
-      const url = await generateVoice(textWithEmotion);
+      const url = await generateVoiceWithEnvironment(inputText, true);
       logger.info('URL audio reçue:', url);
       
       // Vérifier que l'URL est valide
