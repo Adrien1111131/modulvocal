@@ -2,10 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 interface TextInputProps {
   onTextChange: (text: string) => void;
+  initialText?: string;
 }
 
-const TextInput: React.FC<TextInputProps> = ({ onTextChange }) => {
-  const [inputText, setInputText] = useState('');
+const TextInput: React.FC<TextInputProps> = ({ onTextChange, initialText = '' }) => {
+  const [inputText, setInputText] = useState(initialText);
+
+  // Mettre à jour l'état local lorsque initialText change
+  useEffect(() => {
+    if (initialText) {
+      console.log('TextInput - Texte initial reçu:', initialText.substring(0, 50) + '...');
+      setInputText(initialText);
+    }
+  }, [initialText]);
 
   const handleChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = event.target.value;

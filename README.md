@@ -1,6 +1,10 @@
-# Vite React Eleven Labs App
+# Module Vocal - Application React avec ElevenLabs
 
 Cette application React utilise l'API Eleven Labs pour générer des sorties vocales avec différentes émotions. L'application propose une interface conviviale où les utilisateurs peuvent saisir du texte, sélectionner une émotion et écouter la voix générée.
+
+## Intégration avec le Module Histoire
+
+Cette application est conçue pour fonctionner en tandem avec le Module Histoire. Lorsqu'un utilisateur génère une histoire érotique dans le Module Histoire, il peut être redirigé vers ce Module Vocal qui récupérera automatiquement le texte de l'histoire depuis sessionStorage et le préparera pour la génération vocale.
 
 ## Fonctionnalités
 
@@ -67,14 +71,14 @@ vite-react-elevenlabs-app
 
 ## Déploiement sur GitHub Pages
 
-1. Installez la dépendance gh-pages si ce n'est pas déjà fait :
+1. La dépendance gh-pages a déjà été ajoutée au projet :
    ```
    npm install --save-dev gh-pages
    ```
 
-2. Assurez-vous que la configuration de base dans `vite.config.ts` est correcte :
+2. La configuration de base dans `vite.config.ts` a été mise à jour pour GitHub Pages :
    ```typescript
-   base: mode === 'production' ? '/vite-react-elevenlabs-app/' : '/',
+   base: mode === 'production' ? '/modul-vocal/' : '/',
    ```
 
 3. Configurez votre dépôt GitHub :
@@ -98,7 +102,25 @@ vite-react-elevenlabs-app
    - Sélectionnez la branche "gh-pages" comme source
    - Cliquez sur "Save"
 
-Votre application sera accessible à l'adresse : `https://<votre-nom-utilisateur>.github.io/vite-react-elevenlabs-app/`
+Votre application sera accessible à l'adresse : `https://<votre-nom-utilisateur>.github.io/modul-vocal/`
+
+## Déploiement sur Vercel
+
+Pour déployer cette application sur Vercel après l'avoir poussée sur GitHub :
+
+1. Connectez-vous à votre compte Vercel (ou créez-en un si vous n'en avez pas).
+
+2. Importez votre projet depuis votre dépôt GitHub.
+
+3. Configurez les variables d'environnement suivantes dans les paramètres du projet sur Vercel :
+   - `VITE_ELEVENLABS_API_KEY` : Votre clé API ElevenLabs
+   - `VITE_ELEVENLABS_VOICE_ID` : L'ID de la voix ElevenLabs à utiliser
+   - `VITE_GROK_API_KEY` : Votre clé API Grok
+   - `VITE_API_BASE_URL` : L'URL de base de l'API (par exemple, https://votre-domaine.vercel.app/api)
+
+4. Déployez votre application en cliquant sur le bouton "Deploy".
+
+Une fois le déploiement terminé, votre application sera accessible à l'URL fournie par Vercel.
 
 ## Intégration de l'API
 
