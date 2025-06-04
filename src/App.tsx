@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import TextInput from './components/TextInput';
 import VoicePlayer from './components/VoicePlayer';
-import ImageDisplay from './components/ImageDisplay';
 import { generateVoiceWithEnvironment } from './services/elevenLabsAPI';
-import { generateImageFromText } from './services/grokImageService';
+import { analyzeTextEnvironments } from './services/grokService';
 import { logger } from './config/development';
 import './App.css';
 
@@ -12,11 +11,8 @@ const App: React.FC = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // États pour l'image générée
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [imagePrompt, setImagePrompt] = useState<string>('');
-  const [imageError, setImageError] = useState<string | undefined>(undefined);
+  const [detectedEnvironment, setDetectedEnvironment] = useState<string>('default');
+  const [detectedEmotion, setDetectedEmotion] = useState<string>('sensuel');
 
   // Récupérer le texte depuis sessionStorage lors du chargement initial
   useEffect(() => {
@@ -50,12 +46,41 @@ const App: React.FC = () => {
     logger.debug('Changement de texte:', text);
     setInputText(text);
     setError(null);
+
+    // Analyser le texte pour détecter l'environnement, l'émotion et les paramètres vocaux
+    if (text.trim()) {
+      analyzeTextEnvironments(text)
+        .then(detections => {
+          if (detections.length > 0) {
+            setDetectedEnvironment(detections[0].environment);
+            setDetectedEmotion(detections[0].emotionalTone);
+            logger.debug('Environnement détecté:', detections[0].environment);
+            logger.debug('Émotion détectée:', detections[0].emotionalTone);
+          }
+        })
+        .catch(err => {
+          logger.error('Erreur lors de la détection de l\'environnement et de l\'émotion:', err);
+          setDetectedEnvironment('default');
+          setDetectedEmotion('sensuel');
+        });
+    } else {
+      setDetectedEnvironment('default');
+      setDetectedEmotion('sensuel');
+    }
   };
 
   const handleGenerateVoice = async () => {
-    logger.group('Génération de la voix et de l\'image');
+    logger.group('Génération de la voix');
     logger.info('Début de la génération');
     logger.debug('Texte actuel:', inputText);
+    logger.debug('Environnement détecté:', detectedEnvironment);
+    logger.debug('Émotion détectée:', detectedEmotion);
+    
+    // Afficher les logs dans la console du navigateur
+    console.log('Début de la génération de la voix');
+    console.log('Texte:', inputText);
+    console.log('Environnement:', detectedEnvironment);
+    console.log('Émotion:', detectedEmotion);
     
     if (!inputText.trim()) {
       const errorMsg = "Veuillez entrer du texte avant de générer la voix";
@@ -73,23 +98,13 @@ const App: React.FC = () => {
       // L'analyse sera faite par l'API Grok
       logger.debug('Texte à analyser:', inputText);
 
-      // Générer la voix et l'image en parallèle
-      const [voiceResult, imageResult] = await Promise.all([
-        generateVoiceWithEnvironment(inputText, true),
-        generateImageFromText(inputText)
-      ]);
+      // Utiliser la méthode avec environnement intégré
+      console.log('Génération de voix avec environnement intégré');
+      const url = await generateVoiceWithEnvironment(inputText, true);
+      console.log('Génération avec environnement réussie');
       
-      // Traiter le résultat de la génération de voix
-      const url = voiceResult;
       logger.info('URL audio reçue:', url);
-      
-      // Traiter le résultat de la génération d'image
-      if (imageResult) {
-        setImageUrl(imageResult.imageUrl);
-        setImagePrompt(imageResult.prompt);
-        setImageError(imageResult.error);
-        logger.info('Image générée:', imageResult.imageUrl);
-      }
+      console.log('URL audio reçue:', url);
       
       // Vérifier que l'URL est valide
       if (!url) {
@@ -136,31 +151,16 @@ const App: React.FC = () => {
           )}
         </div>
         <div className="player-section">
-          <VoicePlayer audioUrl={audioUrl} />
+          <VoicePlayer 
+            audioUrl={audioUrl} 
+            environment={detectedEnvironment}
+            emotion={detectedEmotion}
+            originalText={inputText}
+          />
           {audioUrl && (
             <div className="audio-info">
               Audio généré avec succès
             </div>
-          )}
-          
-          {/* Affichage de l'image générée */}
-          {(imageUrl || imageError) && (
-            <ImageDisplay 
-              imageUrl={imageUrl} 
-              prompt={imagePrompt}
-              error={imageError}
-              onRegenerateClick={() => {
-                if (inputText) {
-                  generateImageFromText(inputText).then(result => {
-                    if (result) {
-                      setImageUrl(result.imageUrl);
-                      setImagePrompt(result.prompt);
-                      setImageError(result.error);
-                    }
-                  });
-                }
-              }}
-            />
           )}
         </div>
       </div>
