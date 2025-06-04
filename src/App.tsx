@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import TextInput from './components/TextInput';
 import VoicePlayer from './components/VoicePlayer';
+import ImageDisplay from './components/ImageDisplay';
 import { generateVoiceWithEnvironment } from './services/elevenLabsAPI';
+import { generateImageFromText } from './services/grokImageService';
 import { logger } from './config/development';
 import './App.css';
 
@@ -10,6 +12,11 @@ const App: React.FC = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // États pour l'image générée
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imagePrompt, setImagePrompt] = useState<string>('');
+  const [imageError, setImageError] = useState<string | undefined>(undefined);
 
   // Récupérer le texte depuis sessionStorage lors du chargement initial
   useEffect(() => {
@@ -46,7 +53,7 @@ const App: React.FC = () => {
   };
 
   const handleGenerateVoice = async () => {
-    logger.group('Génération de la voix');
+    logger.group('Génération de la voix et de l\'image');
     logger.info('Début de la génération');
     logger.debug('Texte actuel:', inputText);
     
@@ -66,8 +73,23 @@ const App: React.FC = () => {
       // L'analyse sera faite par l'API Grok
       logger.debug('Texte à analyser:', inputText);
 
-      const url = await generateVoiceWithEnvironment(inputText, true);
+      // Générer la voix et l'image en parallèle
+      const [voiceResult, imageResult] = await Promise.all([
+        generateVoiceWithEnvironment(inputText, true),
+        generateImageFromText(inputText)
+      ]);
+      
+      // Traiter le résultat de la génération de voix
+      const url = voiceResult;
       logger.info('URL audio reçue:', url);
+      
+      // Traiter le résultat de la génération d'image
+      if (imageResult) {
+        setImageUrl(imageResult.imageUrl);
+        setImagePrompt(imageResult.prompt);
+        setImageError(imageResult.error);
+        logger.info('Image générée:', imageResult.imageUrl);
+      }
       
       // Vérifier que l'URL est valide
       if (!url) {
@@ -119,6 +141,26 @@ const App: React.FC = () => {
             <div className="audio-info">
               Audio généré avec succès
             </div>
+          )}
+          
+          {/* Affichage de l'image générée */}
+          {(imageUrl || imageError) && (
+            <ImageDisplay 
+              imageUrl={imageUrl} 
+              prompt={imagePrompt}
+              error={imageError}
+              onRegenerateClick={() => {
+                if (inputText) {
+                  generateImageFromText(inputText).then(result => {
+                    if (result) {
+                      setImageUrl(result.imageUrl);
+                      setImagePrompt(result.prompt);
+                      setImageError(result.error);
+                    }
+                  });
+                }
+              }}
+            />
           )}
         </div>
       </div>
