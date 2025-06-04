@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import EmotionSelector from './components/EmotionSelector';
 import TextInput from './components/TextInput';
 import VoicePlayer from './components/VoicePlayer';
 import { generateVoice } from './services/elevenLabsAPI';
@@ -8,7 +7,6 @@ import './App.css';
 
 const App: React.FC = () => {
   const [inputText, setInputText] = useState('');
-  const [selectedEmotion, setSelectedEmotion] = useState('sensuel');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,23 +32,16 @@ const App: React.FC = () => {
     logger.group('État de l\'application');
     logger.debug('État actuel:', {
       inputText,
-      selectedEmotion,
       audioUrl,
       isLoading,
       error
     });
     logger.groupEnd();
-  }, [inputText, selectedEmotion, audioUrl, isLoading, error]);
+  }, [inputText, audioUrl, isLoading, error]);
 
   const handleTextChange = (text: string) => {
     logger.debug('Changement de texte:', text);
     setInputText(text);
-    setError(null);
-  };
-
-  const handleEmotionChange = (emotion: string) => {
-    logger.debug('Changement d\'émotion:', emotion);
-    setSelectedEmotion(emotion);
     setError(null);
   };
 
@@ -71,10 +62,10 @@ const App: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      // Si le texte n'a pas de balises d'émotion, on ajoute l'émotion sélectionnée
+      // Si le texte n'a pas de balises d'émotion, on ajoute l'émotion par défaut (sensuel)
       const textWithEmotion = inputText.match(/\[\w+\]/) 
         ? inputText 
-        : `[${selectedEmotion}]${inputText}[/${selectedEmotion}]`;
+        : `[sensuel]${inputText}[/sensuel]`;
       
       logger.debug('Texte avec émotions:', textWithEmotion);
 
@@ -111,7 +102,6 @@ const App: React.FC = () => {
       <h1>Générateur de Voix Érotique</h1>
       <div className="app-container">
         <div className="controls-section">
-          <EmotionSelector onEmotionChange={handleEmotionChange} />
           <TextInput onTextChange={handleTextChange} initialText={inputText} />
           <button 
             onClick={handleGenerateVoice}
