@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/',
+  base: mode === 'production' ? '/vite-react-elevenlabs-app/' : '/',
   plugins: [react()],
   server: {
     port: 3002,
@@ -14,15 +14,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   build: {
-    sourcemap: true,
-    assetsDir: 'assets',
-    rollupOptions: {
-      output: {
-        assetFileNames: 'assets/[name].[ext]',
-        entryFileNames: 'assets/[name].js',
-        chunkFileNames: 'assets/[name].js'
-      }
-    }
+    sourcemap: true
   },
   css: {
     devSourcemap: true
@@ -42,4 +34,4 @@ export default defineConfig(({ mode }) => ({
       'process.env.NODE_ENV': `"${mode}"`
     }
   }
-}));
+});
